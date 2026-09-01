@@ -1,1 +1,1 @@
-pacakage main
+package main
