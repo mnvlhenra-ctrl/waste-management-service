@@ -50,3 +50,13 @@ CREATE TABLE transactions (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (invoice_id) REFERENCES invoices(id)
 );
+
+-- 5. WASTES
+CREATE TABLE wastes (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    stock_availability DECIMAL(12, 2) NOT NULL DEFAULT 0,
+    costs DECIMAL(12, 2) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

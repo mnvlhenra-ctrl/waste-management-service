@@ -16,7 +16,6 @@ type Handler struct {
 func NewHandler(
 	usecase *usecase.TransactionUsecase,
 ) *Handler {
-
 	return &Handler{
 		usecase: usecase,
 	}
@@ -42,7 +41,7 @@ type paymentRequest struct {
 // @Param request body topUpRequest true "Top up request"
 // @Success 201 {object} domain.Transaction
 // @Failure 400 {object} map[string]string
-// @Router /transactions/topup [post]
+// @Router /api/v1/transactions/topup [post]
 func (h *Handler) CreateTopUp(
 	c echo.Context,
 ) error {
@@ -88,7 +87,7 @@ func (h *Handler) CreateTopUp(
 // @Param request body paymentRequest true "Payment request"
 // @Success 201 {object} domain.Transaction
 // @Failure 400 {object} map[string]string
-// @Router /transactions/pay [post]
+// @Router /api/v1/transactions/pay [post]
 func (h *Handler) CreatePayment(
 	c echo.Context,
 ) error {
@@ -135,7 +134,7 @@ func (h *Handler) CreatePayment(
 // @Success 200 {array} domain.Transaction
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /transactions [get]
+// @Router /api/v1/transactions [get]
 func (h *Handler) GetAll(
 	c echo.Context,
 ) error {
@@ -182,7 +181,7 @@ func (h *Handler) GetAll(
 // @Success 200 {object} domain.Transaction
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /transactions/{id} [get]
+// @Router /api/v1/transactions/{id} [get]
 func (h *Handler) GetByID(
 	c echo.Context,
 ) error {
