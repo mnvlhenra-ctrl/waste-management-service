@@ -31,7 +31,7 @@ func NewHandler(
 // @Param waste body domain.Waste true "Waste"
 // @Success 201 {object} domain.Waste
 // @Failure 400 {object} map[string]string
-// @Router /wastes [post]
+// @Router /api/v1/wastes [post]
 func (h *Handler) Create(
 	c echo.Context,
 ) error {
@@ -47,12 +47,10 @@ func (h *Handler) Create(
 		)
 	}
 
-	err := h.usecase.Create(
+	if err := h.usecase.Create(
 		c.Request().Context(),
 		&waste,
-	)
-
-	if err != nil {
+	); err != nil {
 		return c.JSON(
 			http.StatusBadRequest,
 			map[string]string{
@@ -67,14 +65,14 @@ func (h *Handler) Create(
 	)
 }
 
-// GetAllWastes godoc
+// GetAll godoc
 // @Summary Get all wastes
 // @Description Get all wastes
 // @Tags Wastes
 // @Produce json
 // @Success 200 {array} domain.Waste
 // @Failure 500 {object} map[string]string
-// @Router /wastes [get]
+// @Router /api/v1/wastes [get]
 func (h *Handler) GetAll(
 	c echo.Context,
 ) error {
@@ -98,7 +96,7 @@ func (h *Handler) GetAll(
 	)
 }
 
-// GetWaste godoc
+// GetByID godoc
 // @Summary Get waste by ID
 // @Description Get waste by ID
 // @Tags Wastes
@@ -107,7 +105,7 @@ func (h *Handler) GetAll(
 // @Success 200 {object} domain.Waste
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /wastes/{id} [get]
+// @Router /api/v1/wastes/{id} [get]
 func (h *Handler) GetByID(
 	c echo.Context,
 ) error {
@@ -147,7 +145,7 @@ func (h *Handler) GetByID(
 
 // UpdateWaste godoc
 // @Summary Update waste
-// @Description Update waste data by ID
+// @Description Update waste information
 // @Tags Wastes
 // @Accept json
 // @Produce json
@@ -156,7 +154,7 @@ func (h *Handler) GetByID(
 // @Success 200 {object} domain.Waste
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /wastes/{id} [put]
+// @Router /api/v1/wastes/{id} [put]
 func (h *Handler) Update(
 	c echo.Context,
 ) error {
@@ -187,12 +185,10 @@ func (h *Handler) Update(
 
 	waste.ID = id
 
-	err = h.usecase.Update(
+	if err := h.usecase.Update(
 		c.Request().Context(),
 		&waste,
-	)
-
-	if err != nil {
+	); err != nil {
 		return c.JSON(
 			http.StatusBadRequest,
 			map[string]string{
@@ -201,9 +197,23 @@ func (h *Handler) Update(
 		)
 	}
 
+	updatedWaste, err := h.usecase.GetByID(
+		c.Request().Context(),
+		id,
+	)
+
+	if err != nil {
+		return c.JSON(
+			http.StatusNotFound,
+			map[string]string{
+				"error": err.Error(),
+			},
+		)
+	}
+
 	return c.JSON(
 		http.StatusOK,
-		waste,
+		updatedWaste,
 	)
 }
 
@@ -216,7 +226,7 @@ func (h *Handler) Update(
 // @Success 204
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /wastes/{id} [delete]
+// @Router /api/v1/wastes/{id} [delete]
 func (h *Handler) Delete(
 	c echo.Context,
 ) error {
@@ -234,12 +244,10 @@ func (h *Handler) Delete(
 		)
 	}
 
-	err = h.usecase.Delete(
+	if err := h.usecase.Delete(
 		c.Request().Context(),
 		id,
-	)
-
-	if err != nil {
+	); err != nil {
 		return c.JSON(
 			http.StatusNotFound,
 			map[string]string{
@@ -248,7 +256,5 @@ func (h *Handler) Delete(
 		)
 	}
 
-	return c.NoContent(
-		http.StatusNoContent,
-	)
+	return c.NoContent(http.StatusNoContent)
 }
