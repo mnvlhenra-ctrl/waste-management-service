@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 	"errors"
+	"time"
 
 	"waste-management-service/internal/domain"
-	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 )
 
 const (
@@ -17,13 +17,12 @@ const (
 )
 
 type TransactionUsecase struct {
-	transactionRepo transactionRepository.TransactionRepository
+	transactionRepo domain.TransactionRepository
 }
 
 func NewTransactionUsecase(
-	transactionRepo transactionRepository.TransactionRepository,
+	transactionRepo domain.TransactionRepository,
 ) *TransactionUsecase {
-
 	return &TransactionUsecase{
 		transactionRepo: transactionRepo,
 	}
@@ -41,9 +40,7 @@ func (u *TransactionUsecase) CreateTopUp(
 	}
 
 	if amount <= 0 {
-		return nil, errors.New(
-			"amount must be greater than zero",
-		)
+		return nil, errors.New("amount must be greater than zero")
 	}
 
 	transaction := &domain.Transaction{
@@ -52,11 +49,20 @@ func (u *TransactionUsecase) CreateTopUp(
 		Amount:          amount,
 		TransactionType: TransactionTypeTopUp,
 		Status:          TransactionStatusSuccess,
+		TransactionDate: time.Now(),
 	}
 
 	if err := u.transactionRepo.Create(
 		ctx,
 		transaction,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := u.transactionRepo.UpdateUserBalance(
+		ctx,
+		userID,
+		amount,
 	); err != nil {
 		return nil, err
 	}
@@ -81,9 +87,16 @@ func (u *TransactionUsecase) CreatePayment(
 	}
 
 	if amount <= 0 {
-		return nil, errors.New(
-			"amount must be greater than zero",
-		)
+		return nil, errors.New("amount must be greater than zero")
+	}
+
+	if err := u.transactionRepo.ValidateInvoice(
+		ctx,
+		userID,
+		invoiceID,
+		amount,
+	); err != nil {
+		return nil, err
 	}
 
 	transaction := &domain.Transaction{
@@ -93,11 +106,19 @@ func (u *TransactionUsecase) CreatePayment(
 		Amount:          amount,
 		TransactionType: TransactionTypePayment,
 		Status:          TransactionStatusSuccess,
+		TransactionDate: time.Now(),
 	}
 
 	if err := u.transactionRepo.Create(
 		ctx,
 		transaction,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := u.transactionRepo.MarkInvoicePaid(
+		ctx,
+		invoiceID,
 	); err != nil {
 		return nil, err
 	}
@@ -128,9 +149,7 @@ func (u *TransactionUsecase) GetByID(
 ) (*domain.Transaction, error) {
 
 	if id <= 0 {
-		return nil, errors.New(
-			"invalid transaction id",
-		)
+		return nil, errors.New("invalid transaction id")
 	}
 
 	return u.transactionRepo.GetByID(
