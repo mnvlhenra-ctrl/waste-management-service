@@ -3,6 +3,7 @@ package delivery
 import (
 	"net/http"
 	"waste-management-service/internal/domain"
+	appMiddleware "waste-management-service/internal/middleware"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -24,7 +25,8 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase) {
 	users.POST("/login", handler.Login)
 
 	// Endpoint yang butuh login
-	users.GET("/profile", handler.GetProfile)
+	users.GET("/profile", handler.GetProfile, appMiddleware.JWTMiddleware())
+
 }
 
 // register handler

@@ -7,6 +7,9 @@ import (
 	transactionHTTP "waste-management-service/internal/transaction-microservice/delivery/http"
 	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 	transactionUsecase "waste-management-service/internal/transaction-microservice/usecase"
+	userHTTP "waste-management-service/internal/user-microservice/delivery"
+	userRepository "waste-management-service/internal/user-microservice/repository"
+	userUsecase "waste-management-service/internal/user-microservice/usecase"
 	wasteHTTP "waste-management-service/internal/waste-microservice/delivery/http"
 	wasteRepository "waste-management-service/internal/waste-microservice/repository"
 	wasteUsecase "waste-management-service/internal/waste-microservice/usecase"
@@ -35,6 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Echo
+	e := echo.New()
+
+	// User
+	uRepo := userRepository.NewUserRepository(db)
+	uUC := userUsecase.NewUserUsecase(uRepo, cfg.JWTSecret)
+	userHTTP.NewUserHandler(e, uUC)
+
 	// Transaction
 	transactionRepo := transactionRepository.NewTransactionRepository(db)
 
@@ -56,9 +67,6 @@ func main() {
 	wasteHandler := wasteHTTP.NewHandler(
 		wasteUC,
 	)
-
-	// Echo
-	e := echo.New()
 
 	transactionHTTP.RegisterRoutes(
 		e,
