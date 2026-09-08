@@ -1,4 +1,12 @@
 create database wms_db;
+
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS invoices CASCADE;
+DROP TABLE IF EXISTS houses CASCADE;
+DROP TABLE IF EXISTS wastes CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+
 -- 1. USERS (Sesuai syarat instruktur)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -10,9 +18,12 @@ CREATE TABLE users (
 );
 -- 2. HOUSES / KOMPLEK LISTINGS (Main Entity)
 -- Memenuhi syarat: id, name, services, costs, category
+-- 1 user = 1 rumah
+-- house_number diisi user saat register
 CREATE TABLE houses (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
+    house_number VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     category VARCHAR(50) NOT NULL,
     -- services diubah fungsinya menjadi Jadwal Pengambilan

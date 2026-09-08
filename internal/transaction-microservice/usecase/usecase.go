@@ -99,6 +99,15 @@ func (u *TransactionUsecase) CreatePayment(
 		return nil, err
 	}
 
+	// Kurangi saldo user sesuai jumlah pembayaran
+	if err := u.transactionRepo.UpdateUserBalance(
+		ctx,
+		userID,
+		-amount,
+	); err != nil {
+		return nil, err
+	}
+
 	transaction := &domain.Transaction{
 		UserID:          userID,
 		InvoiceID:       &invoiceID,

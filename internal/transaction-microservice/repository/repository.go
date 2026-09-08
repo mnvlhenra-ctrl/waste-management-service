@@ -134,12 +134,9 @@ func (r *transactionRepository) ValidateInvoice(
 ) error {
 
 	var invoice struct {
-		ID     int
-		Amount float64
-		Status string
-		House  struct {
-			UserID int
-		} `gorm:"foreignKey:HouseID"`
+		ID      int
+		Amount  float64
+		Status  string
 		HouseID int
 	}
 
