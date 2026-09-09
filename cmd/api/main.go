@@ -5,8 +5,6 @@ import (
 
 	"waste-management-service/internal/config"
 
-	invoiceRepository "waste-management-service/internal/invoice-microservice/repository"
-
 	transactionHTTP "waste-management-service/internal/transaction-microservice/delivery/http"
 	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 	transactionUsecase "waste-management-service/internal/transaction-microservice/usecase"
@@ -15,7 +13,7 @@ import (
 	userRepository "waste-management-service/internal/user-microservice/repository"
 	userUsecase "waste-management-service/internal/user-microservice/usecase"
 
-	houseRepository "waste-management-service/internal/house-microservice/repository"
+	repository "waste-management-service/internal/utils/repository"
 
 	wasteHTTP "waste-management-service/internal/waste-microservice/delivery/http"
 	wasteRepository "waste-management-service/internal/waste-microservice/repository"
@@ -54,14 +52,10 @@ func main() {
 	uRepo := userRepository.NewUserRepository(db)
 
 	// =========================
-	// House
+	// House & Invoice
 	// =========================
-	houseRepo := houseRepository.NewHouseRepository(db)
-
-	// =========================
-	// Invoice
-	// =========================
-	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
+	houseRepo := repository.NewHouseRepository(db)
+	invoiceRepo := repository.NewInvoiceRepository(db)
 
 	// =========================
 	// User Usecase
