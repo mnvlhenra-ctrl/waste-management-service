@@ -3,7 +3,9 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
+	"waste-management-service/internal/domain"
 	"waste-management-service/internal/transaction-microservice/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -11,6 +13,23 @@ import (
 
 type Handler struct {
 	usecase *usecase.TransactionUsecase
+}
+
+func formatTransactionDate(t time.Time) string {
+	return t.Format("2006-01-02 15:04")
+}
+
+func formatTransaction(transaction *domain.Transaction) map[string]interface{} {
+	return map[string]interface{}{
+		"id":               transaction.ID,
+		"user_id":          transaction.UserID,
+		"invoice_id":       transaction.InvoiceID,
+		"name":             transaction.Name,
+		"amount":           transaction.Amount,
+		"transaction_type": transaction.TransactionType,
+		"status":           transaction.Status,
+		"transaction_date": formatTransactionDate(transaction.TransactionDate),
+	}
 }
 
 func NewHandler(
@@ -74,7 +93,7 @@ func (h *Handler) CreateTopUp(
 
 	return c.JSON(
 		http.StatusCreated,
-		transaction,
+		formatTransaction(transaction),
 	)
 }
 
@@ -121,7 +140,7 @@ func (h *Handler) CreatePayment(
 
 	return c.JSON(
 		http.StatusCreated,
-		transaction,
+		formatTransaction(transaction),
 	)
 }
 
@@ -166,9 +185,18 @@ func (h *Handler) GetAll(
 		)
 	}
 
+	response := make([]map[string]interface{}, 0)
+
+	for i := range transactions {
+		response = append(
+			response,
+			formatTransaction(&transactions[i]),
+		)
+	}
+
 	return c.JSON(
 		http.StatusOK,
-		transactions,
+		response,
 	)
 }
 
@@ -215,6 +243,6 @@ func (h *Handler) GetByID(
 
 	return c.JSON(
 		http.StatusOK,
-		transaction,
+		formatTransaction(transaction),
 	)
 }
