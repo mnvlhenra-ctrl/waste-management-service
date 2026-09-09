@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"waste-management-service/internal/config"
+	"waste-management-service/internal/domain"
 
 	invoiceRepository "waste-management-service/internal/invoice-microservice/repository"
 
@@ -22,6 +23,7 @@ import (
 	wasteUsecase "waste-management-service/internal/waste-microservice/usecase"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -42,30 +44,38 @@ func main() {
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to database: ", err)
+	}
+
+	// =========================
+	// Database Auto Migration
+	// =========================
+	err = db.AutoMigrate(
+		&domain.User{},
+		&domain.House{},
+		&domain.Invoice{},
+		&domain.Transaction{},
+		&domain.Waste{},
+	)
+	if err != nil {
+		log.Fatal("Failed to auto migrate database: ", err)
 	}
 
 	// Echo
 	e := echo.New()
 
+	// Middleware Bawaan
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+
 	// =========================
 	// User
 	// =========================
 	uRepo := userRepository.NewUserRepository(db)
-
-	// =========================
-	// House
-	// =========================
 	houseRepo := houseRepository.NewHouseRepository(db)
-
-	// =========================
-	// Invoice
-	// =========================
 	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 
-	// =========================
-	// User Usecase
-	// =========================
 	uUC := userUsecase.NewUserUsecase(
 		uRepo,
 		houseRepo,
@@ -82,11 +92,9 @@ func main() {
 	// Transaction
 	// =========================
 	transactionRepo := transactionRepository.NewTransactionRepository(db)
-
 	transactionUC := transactionUsecase.NewTransactionUsecase(
 		transactionRepo,
 	)
-
 	transactionHandler := transactionHTTP.NewHandler(
 		transactionUC,
 	)
@@ -100,11 +108,9 @@ func main() {
 	// Waste
 	// =========================
 	wasteRepo := wasteRepository.NewWasteRepository(db)
-
 	wasteUC := wasteUsecase.NewWasteUsecase(
 		wasteRepo,
 	)
-
 	wasteHandler := wasteHTTP.NewHandler(
 		wasteUC,
 	)
