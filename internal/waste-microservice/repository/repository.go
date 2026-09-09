@@ -17,65 +17,88 @@ func NewWasteRepository(db *gorm.DB) domain.WasteRepository {
 	return &wasteRepository{db}
 }
 
-func (r *wasteRepository) Create(ctx context.Context, waste *domain.Waste) error {
+func (r *wasteRepository) Create(
+	ctx context.Context,
+	waste *domain.Waste,
+) error {
 	return r.db.WithContext(ctx).Create(waste).Error
 }
 
-func (r *wasteRepository) GetAll(ctx context.Context, category string, isSeparated string) ([]domain.Waste, error) {
+func (r *wasteRepository) GetAll(
+	ctx context.Context,
+) ([]domain.Waste, error) {
+
 	var wastes []domain.Waste
-	query := r.db.WithContext(ctx)
 
-	// Logika filter otomatis jika parameter diisi
-	if category != "" {
-		query = query.Where("category = ?", category)
-	}
+	err := r.db.WithContext(ctx).
+		Order("id ASC").
+		Find(&wastes).Error
 
-	if isSeparated == "true" {
-		query = query.Where("is_separated = ?", true)
-	} else if isSeparated == "false" {
-		query = query.Where("is_separated = ?", false)
-	}
-
-	err := query.Order("id ASC").Find(&wastes).Error
 	return wastes, err
 }
 
-func (r *wasteRepository) GetByID(ctx context.Context, id int) (*domain.Waste, error) {
+func (r *wasteRepository) GetByID(
+	ctx context.Context,
+	id int,
+) (*domain.Waste, error) {
+
 	var waste domain.Waste
-	err := r.db.WithContext(ctx).First(&waste, id).Error
+
+	err := r.db.WithContext(ctx).
+		First(&waste, id).Error
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("waste not found")
 	}
-	return &waste, err
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &waste, nil
 }
 
-func (r *wasteRepository) Update(ctx context.Context, waste *domain.Waste) error {
-	result := r.db.WithContext(ctx).Model(&domain.Waste{}).
+func (r *wasteRepository) Update(
+	ctx context.Context,
+	waste *domain.Waste,
+) error {
+
+	result := r.db.WithContext(ctx).
+		Model(&domain.Waste{}).
 		Where("id = ?", waste.ID).
 		Updates(map[string]interface{}{
 			"name":               waste.Name,
 			"stock_availability": waste.StockAvailability,
 			"costs":              waste.Costs,
 			"category":           waste.Category,
-			"is_separated":       waste.IsSeparated,
 		})
 
 	if result.Error != nil {
 		return result.Error
 	}
+
 	if result.RowsAffected == 0 {
 		return errors.New("waste not found")
 	}
+
 	return nil
 }
 
-func (r *wasteRepository) Delete(ctx context.Context, id int) error {
-	result := r.db.WithContext(ctx).Delete(&domain.Waste{}, id)
+func (r *wasteRepository) Delete(
+	ctx context.Context,
+	id int,
+) error {
+
+	result := r.db.WithContext(ctx).
+		Delete(&domain.Waste{}, id)
+
 	if result.Error != nil {
 		return result.Error
 	}
+
 	if result.RowsAffected == 0 {
 		return errors.New("waste not found")
 	}
+
 	return nil
 }
