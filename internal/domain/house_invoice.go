@@ -31,5 +31,6 @@ type Invoice struct {
 type InvoiceRepository interface {
 	Create(ctx context.Context, invoice *Invoice) error
 	GetByID(ctx context.Context, id int) (*Invoice, error)
+	GetByUserID(ctx context.Context, userID int) ([]Invoice, error)
 	UpdateStatus(ctx context.Context, id int, status string) error
 }

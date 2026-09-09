@@ -74,6 +74,24 @@ func (r *invoiceRepository) GetByID(
 	return &invoice, nil
 }
 
+// GetByUserID mengambil semua invoice milik user
+func (r *invoiceRepository) GetByUserID(
+	ctx context.Context,
+	userID int,
+) ([]domain.Invoice, error) {
+
+	var invoices []domain.Invoice
+
+	err := r.db.WithContext(ctx).
+		Table("invoices").
+		Joins("JOIN houses ON houses.id = invoices.house_id").
+		Where("houses.user_id = ?", userID).
+		Order("invoices.id ASC").
+		Find(&invoices).Error
+
+	return invoices, err
+}
+
 func (r *invoiceRepository) UpdateStatus(
 	ctx context.Context,
 	id int,
