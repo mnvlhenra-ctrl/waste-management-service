@@ -25,12 +25,21 @@ func NewPickupHandler(
 }
 
 type createPickupRequest struct {
-	UserID     int       `json:"user_id"`
-	PickupDate time.Time `json:"pickup_date"`
-	WasteType  string    `json:"waste_type"`
+	UserID     int       `json:"user_id" example:"1"`
+	PickupDate time.Time `json:"pickup_date" example:"2026-09-15T09:00:00Z"`
+	WasteType  string    `json:"waste_type" example:"Organic"`
 }
 
-// CreatePickup membuat jadwal pengambilan sampah.
+// CreatePickup godoc
+// @Summary Create pickup schedule
+// @Description Create a new waste pickup schedule
+// @Tags Pickups
+// @Accept json
+// @Produce json
+// @Param request body createPickupRequest true "Pickup schedule request"
+// @Success 201 {object} usecase.PickupSchedule
+// @Failure 400 {object} map[string]string
+// @Router /api/v1/pickups [post]
 func (h *PickupHandler) CreatePickup(c echo.Context) error {
 
 	var request createPickupRequest
@@ -68,7 +77,14 @@ func (h *PickupHandler) CreatePickup(c echo.Context) error {
 	)
 }
 
-// GetTomorrowPickup mengambil jadwal pickup untuk besok.
+// GetTomorrowPickup godoc
+// @Summary Get tomorrow pickup schedules
+// @Description Get all waste pickup schedules for tomorrow
+// @Tags Pickups
+// @Produce json
+// @Success 200 {array} usecase.PickupSchedule
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/pickups/tomorrow [get]
 func (h *PickupHandler) GetTomorrowPickup(c echo.Context) error {
 
 	schedules, err := h.usecase.GetTomorrow(
@@ -90,7 +106,14 @@ func (h *PickupHandler) GetTomorrowPickup(c echo.Context) error {
 	)
 }
 
-// SendReminderTest menjalankan pickup reminder secara manual untuk testing.
+// SendReminderTest godoc
+// @Summary Test pickup reminder
+// @Description Manually trigger the pickup reminder job for testing
+// @Tags Pickups
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/pickups/reminder-test [post]
 func (h *PickupHandler) SendReminderTest(c echo.Context) error {
 
 	if h.reminderJob == nil {
