@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"waste-management-service/internal/domain"
+	"waste-management-service/pkg/email"
 )
 
 const (
@@ -18,13 +20,19 @@ const (
 
 type TransactionUsecase struct {
 	transactionRepo domain.TransactionRepository
+	userRepo        domain.UserRepository
+	emailService    email.Service
 }
 
 func NewTransactionUsecase(
 	transactionRepo domain.TransactionRepository,
+	userRepo domain.UserRepository,
+	emailService email.Service,
 ) *TransactionUsecase {
 	return &TransactionUsecase{
 		transactionRepo: transactionRepo,
+		userRepo:        userRepo,
+		emailService:    emailService,
 	}
 }
 
@@ -90,6 +98,8 @@ func (u *TransactionUsecase) CreatePayment(
 		return nil, errors.New("amount must be greater than zero")
 	}
 
+	// Pastikan invoice memang milik user,
+	// belum dibayar, dan nominal sesuai.
 	if err := u.transactionRepo.ValidateInvoice(
 		ctx,
 		userID,
@@ -125,11 +135,47 @@ func (u *TransactionUsecase) CreatePayment(
 		return nil, err
 	}
 
+	// Ubah status invoice menjadi PAID
 	if err := u.transactionRepo.MarkInvoicePaid(
 		ctx,
 		invoiceID,
 	); err != nil {
 		return nil, err
+	}
+
+	// =========================
+	// SEND PAYMENT EMAIL
+	// =========================
+
+	user, err := u.userRepo.GetByID(ctx, userID)
+
+	if err == nil && u.emailService != nil {
+
+		invoiceNumber := fmt.Sprintf(
+			"INV-%d",
+			invoiceID,
+		)
+
+		paymentDate := transaction.TransactionDate.Format(
+			"02 January 2006 15:04",
+		)
+
+		body := email.PaymentInvoiceEmail(
+			user.Email,
+			invoiceNumber,
+			amount,
+			paymentDate,
+			"Saldo",
+		)
+
+		// Email gagal tidak membatalkan payment.
+		// Payment dan invoice tetap dianggap berhasil.
+		_ = u.emailService.Send(
+			ctx,
+			user.Email,
+			"Payment Successful - "+invoiceNumber,
+			body,
+		)
 	}
 
 	return transaction, nil

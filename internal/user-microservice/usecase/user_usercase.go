@@ -6,30 +6,34 @@ import (
 	"time"
 
 	"waste-management-service/internal/domain"
+	"waste-management-service/pkg/email"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type userUsecase struct {
-	userRepo    domain.UserRepository
-	houseRepo   domain.HouseRepository
-	invoiceRepo domain.InvoiceRepository
-	jwtSecret   string
+	userRepo     domain.UserRepository
+	houseRepo    domain.HouseRepository
+	invoiceRepo  domain.InvoiceRepository
+	emailService email.Service
+	jwtSecret    string
 }
 
 func NewUserUsecase(
 	repo domain.UserRepository,
 	houseRepo domain.HouseRepository,
 	invoiceRepo domain.InvoiceRepository,
+	emailService email.Service,
 	secret string,
 ) domain.UserUsecase {
 
 	return &userUsecase{
-		userRepo:    repo,
-		houseRepo:   houseRepo,
-		invoiceRepo: invoiceRepo,
-		jwtSecret:   secret,
+		userRepo:     repo,
+		houseRepo:    houseRepo,
+		invoiceRepo:  invoiceRepo,
+		emailService: emailService,
+		jwtSecret:    secret,
 	}
 }
 
@@ -101,6 +105,20 @@ func (u *userUsecase) Register(
 	}
 
 	if err := u.invoiceRepo.Create(ctx, invoice); err != nil {
+		return err
+	}
+
+	body := email.RegistrationEmail(
+		user.Email,
+		user.Email,
+	)
+
+	if err := u.emailService.Send(
+		ctx,
+		user.Email,
+		"Registration Successful",
+		body,
+	); err != nil {
 		return err
 	}
 

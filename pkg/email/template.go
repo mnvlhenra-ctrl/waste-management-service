@@ -2,14 +2,10 @@ package email
 
 import "fmt"
 
-// PaymentReminderEmail generates an email reminding the user
-// to complete their payment.
-func PaymentReminderEmail(
+// RegistrationEmail generates an email after successful registration.
+func RegistrationEmail(
 	username string,
-	invoiceNumber string,
-	amount float64,
-	dueDate string,
-	paymentURL string,
+	email string,
 ) string {
 
 	return fmt.Sprintf(`
@@ -17,18 +13,76 @@ func PaymentReminderEmail(
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>Payment Reminder</title>
+	<title>Registration Successful</title>
 </head>
 
 <body style="font-family: Arial, sans-serif; line-height: 1.6;">
 
-	<h2>Payment Reminder</h2>
+	<h2>Registration Successful</h2>
 
 	<p>Hello <strong>%s</strong>,</p>
 
 	<p>
-		This is a reminder that your payment is still pending.
-		Please complete your payment before the due date.
+		Your account has been successfully registered.
+		Welcome to Waste Management Service.
+	</p>
+
+	<table>
+		<tr>
+			<td><strong>Email</strong></td>
+			<td>: %s</td>
+		</tr>
+
+		<tr>
+			<td><strong>Status</strong></td>
+			<td>: ACTIVE</td>
+		</tr>
+	</table>
+
+	<br>
+
+	<p>
+		You can now use our waste management service.
+	</p>
+
+	<p>
+		Thank you for joining us.
+	</p>
+
+</body>
+</html>
+`,
+		username,
+		email,
+	)
+}
+
+// InvoiceEmail generates an email when a new invoice is created.
+func InvoiceEmail(
+	username string,
+	invoiceNumber string,
+	service string,
+	amount float64,
+	dueDate string,
+) string {
+
+	return fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>New Invoice</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+	<h2>New Invoice</h2>
+
+	<p>Hello <strong>%s</strong>,</p>
+
+	<p>
+		A new invoice has been created for your waste management service.
+		Please complete the payment before the due date.
 	</p>
 
 	<table>
@@ -38,35 +92,30 @@ func PaymentReminderEmail(
 		</tr>
 
 		<tr>
+			<td><strong>Service</strong></td>
+			<td>: %s</td>
+		</tr>
+
+		<tr>
 			<td><strong>Amount</strong></td>
-			<td>: Rp %.2f</td>
+			<td>: Rp %.0f</td>
 		</tr>
 
 		<tr>
 			<td><strong>Due Date</strong></td>
 			<td>: %s</td>
 		</tr>
+
+		<tr>
+			<td><strong>Status</strong></td>
+			<td>: UNPAID</td>
+		</tr>
 	</table>
 
 	<br>
 
 	<p>
-		<a href="%s"
-		   style="
-		   display: inline-block;
-		   padding: 10px 20px;
-		   background-color: #2563eb;
-		   color: white;
-		   text-decoration: none;
-		   border-radius: 5px;
-		   ">
-			Pay Now
-		</a>
-	</p>
-
-	<p>
-		If you have already completed the payment,
-		please ignore this email.
+		Please complete your payment before the due date.
 	</p>
 
 	<p>
@@ -78,13 +127,76 @@ func PaymentReminderEmail(
 `,
 		username,
 		invoiceNumber,
+		service,
 		amount,
 		dueDate,
-		paymentURL,
 	)
 }
 
-// PaymentInvoiceEmail generates an invoice email
+// CollectionReminderEmail generates an email reminder
+// one day before the scheduled waste collection.
+func CollectionReminderEmail(
+	username string,
+	service string,
+	collectionDate string,
+) string {
+
+	return fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Waste Collection Reminder</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+	<h2>Waste Collection Reminder</h2>
+
+	<p>Hello <strong>%s</strong>,</p>
+
+	<p>
+		This is a reminder that your waste collection is scheduled for tomorrow.
+		Please make sure your waste is ready for collection.
+	</p>
+
+	<table>
+		<tr>
+			<td><strong>Service</strong></td>
+			<td>: %s</td>
+		</tr>
+
+		<tr>
+			<td><strong>Collection Date</strong></td>
+			<td>: %s</td>
+		</tr>
+
+		<tr>
+			<td><strong>Reminder</strong></td>
+			<td>: 1 day before collection</td>
+		</tr>
+	</table>
+
+	<br>
+
+	<p>
+		Please prepare your waste before the scheduled collection time.
+	</p>
+
+	<p>
+		Thank you for using our service.
+	</p>
+
+</body>
+</html>
+`,
+		username,
+		service,
+		collectionDate,
+	)
+}
+
+// PaymentInvoiceEmail generates an email
 // after a payment has been successfully completed.
 func PaymentInvoiceEmail(
 	username string,
@@ -99,7 +211,7 @@ func PaymentInvoiceEmail(
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>Payment Invoice</title>
+	<title>Payment Successful</title>
 </head>
 
 <body style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -123,7 +235,7 @@ func PaymentInvoiceEmail(
 
 		<tr>
 			<td><strong>Amount Paid</strong></td>
-			<td>: Rp %.2f</td>
+			<td>: Rp %.0f</td>
 		</tr>
 
 		<tr>

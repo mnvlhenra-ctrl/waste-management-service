@@ -1,0 +1,37 @@
+[33mbf67fce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/nauval[m[33m, [m[1;32mbackup/feature-nauval[m[33m)[m chore: remove env from tracking
+[33me514239[m 3rd party installed
+[33m8a210ec[m Resend 3rd Party Connected
+[33ma926c2d[m[33m ([m[1;31morigin/feature/ardhit[m[33m)[m fix: fixing created_at waktunya tidak rapi. sekarang ada format nya, delete waste sekarang ada message nya kalau berhasil
+[33m16ef8b7[m[33m ([m[1;31morigin/feature/nauval[m[33m)[m alhamdulillah merged
+[33md57188b[m fix repo & usecase waste-microservice
+[33m9d55b14[m add waste-microservices
+[33m867d0e4[m Merge pull request #4 from mnvlhenra-ctrl/feature/nauval
+[33m56ae7ac[m Kuscing Ilang
+[33m1d488ef[m finnaly merged
+[33m7682185[m fixing bugs house invoice domain
+[33m02a0d65[m delete file, error merging
+[33mde9a6a6[m Merge branch 'feature/nauval' of https://github.com/mnvlhenra-ctrl/waste-management-service into feature/ardhit
+[33m5581dd6[m Testing Merging
+[33m26e3063[m error merging
+[33m1267ddc[m Merge branch 'feature/nauval' of https://github.com/mnvlhenra-ctrl/waste-management-service into feature/ardhit
+[33m8a149e6[m Merge branch 'feature/nauval' of https://github.com/mnvlhenra-ctrl/waste-management-service into feature/ardhit
+[33m20b4f7c[m Time Fix
+[33mb9c735a[m feat: add waste-microservice handler, repo, usecase, domain, fixing main
+[33m92ad4f2[m Merge House & Invoice
+[33m07a9f91[m Pay and balance update
+[33mf6182db[m Transaction: Balance update Done
+[33mede0944[m fix: fixing user Register, login, JWT auth
+[33me6eb159[m Waste-Microservice handler & routes update
+[33mced7d3b[m Implementasi Gorm
+[33md35a08e[m feat: merged user, transaction, waste microservices, fix: go mod, etc.
+[33m231699a[m Transaction-Microservice
+[33m4c443ea[m add userhandler register, login, getprofile logic, fix: fixing some bugs
+[33m8800f7b[m feat: add user domain, user repo, user usecase, draft handler, fix: fixing mod
+[33m978c8cf[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #1 from mnvlhenra-ctrl/feature/ardhit
+[33m8fcdf68[m init commit
+[33m2704743[m initial commit
+[33m2988d0a[m[33m ([m[1;32mmain[m[33m)[m Skeleton4.0
+[33mf635800[m Skeleton3.0
+[33mc751108[m Skeleton2.0
+[33md46d623[m Skeleton
+[33m6733f22[m Pair Project

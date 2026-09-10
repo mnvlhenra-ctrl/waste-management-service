@@ -4,10 +4,10 @@ import (
 	"log"
 
 	"waste-management-service/internal/config"
-
 	transactionHTTP "waste-management-service/internal/transaction-microservice/delivery/http"
 	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 	transactionUsecase "waste-management-service/internal/transaction-microservice/usecase"
+	"waste-management-service/pkg/email"
 
 	userHTTP "waste-management-service/internal/user-microservice/delivery"
 	userRepository "waste-management-service/internal/user-microservice/repository"
@@ -45,7 +45,7 @@ func main() {
 
 	// Echo
 	e := echo.New()
-
+	emailSvc := email.NewResendService()
 	// =========================
 	// User
 	// =========================
@@ -64,12 +64,18 @@ func main() {
 		uRepo,
 		houseRepo,
 		invoiceRepo,
+		emailSvc,
 		cfg.JWTSecret,
+	)
+
+	invoiceUC := userUsecase.NewInvoiceUsecase(
+		invoiceRepo,
 	)
 
 	userHTTP.NewUserHandler(
 		e,
 		uUC,
+		invoiceUC,
 	)
 
 	// =========================
@@ -79,6 +85,8 @@ func main() {
 
 	transactionUC := transactionUsecase.NewTransactionUsecase(
 		transactionRepo,
+		uRepo,
+		emailSvc,
 	)
 
 	transactionHandler := transactionHTTP.NewHandler(

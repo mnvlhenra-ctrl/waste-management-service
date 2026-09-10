@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"context"
 	"net/http"
 
 	"waste-management-service/internal/domain"
@@ -10,14 +11,25 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type UserHandler struct {
-	UUsecase domain.UserUsecase
+type invoiceService interface {
+	GetByUserID(ctx context.Context, userID int) ([]domain.Invoice, error)
 }
 
-func NewUserHandler(e *echo.Echo, us domain.UserUsecase) {
-	handler := &UserHandler{UUsecase: us}
+type UserHandler struct {
+	UUsecase       domain.UserUsecase
+	InvoiceUsecase invoiceService
+}
 
-	// Routing Group API v1
+func NewUserHandler(
+	e *echo.Echo,
+	us domain.UserUsecase,
+	invoiceUC invoiceService,
+) {
+	handler := &UserHandler{
+		UUsecase:       us,
+		InvoiceUsecase: invoiceUC,
+	}
+
 	v1 := e.Group("/api/v1")
 
 	users := v1.Group("/users")
@@ -26,7 +38,14 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase) {
 	users.POST("/login", handler.Login)
 
 	// Endpoint yang butuh login
-	users.GET("/profile", handler.GetProfile, appMiddleware.JWTMiddleware())
+	users.GET(
+		"/profile",
+		handler.GetProfile,
+		appMiddleware.JWTMiddleware(),
+	)
+
+	// Get invoice milik user yang sedang login
+	users.GET("/invoices", handler.GetMyInvoices, appMiddleware.JWTMiddleware())
 }
 
 type registerRequest struct {
@@ -35,7 +54,6 @@ type registerRequest struct {
 	HouseNumber string `json:"house_number"`
 }
 
-// register handler
 func (h *UserHandler) Register(c echo.Context) error {
 
 	var request registerRequest
@@ -78,7 +96,6 @@ func (h *UserHandler) Register(c echo.Context) error {
 	)
 }
 
-// login handler
 func (h *UserHandler) Login(c echo.Context) error {
 
 	var req struct {
@@ -95,10 +112,8 @@ func (h *UserHandler) Login(c echo.Context) error {
 		)
 	}
 
-	ctx := c.Request().Context()
-
 	token, err := h.UUsecase.Login(
-		ctx,
+		c.Request().Context(),
 		req.Email,
 		req.Password,
 	)
@@ -120,10 +135,8 @@ func (h *UserHandler) Login(c echo.Context) error {
 	)
 }
 
-// getprofile handler
 func (h *UserHandler) GetProfile(c echo.Context) error {
 
-	// 1. Ambil token dari context
 	userToken, ok := c.Get("user").(*jwt.Token)
 
 	if !ok {
@@ -135,18 +148,32 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		)
 	}
 
-	// 2. Ekstrak data claims
-	claims := userToken.Claims.(jwt.MapClaims)
+	claims, ok := userToken.Claims.(jwt.MapClaims)
 
-	// 3. Ambil ID
-	idFloat := claims["id"].(float64)
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"message": "Invalid token claims",
+			},
+		)
+	}
+
+	idFloat, ok := claims["id"].(float64)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"message": "Invalid user id",
+			},
+		)
+	}
+
 	userID := int(idFloat)
 
-	// 4. Cari data profil di database
-	ctx := c.Request().Context()
-
 	profile, err := h.UUsecase.GetProfile(
-		ctx,
+		c.Request().Context(),
 		userID,
 	)
 
@@ -159,11 +186,69 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		)
 	}
 
-	// Jangan pernah mengirimkan password
+	// Jangan kirim password
 	profile.Password = ""
 
 	return c.JSON(
 		http.StatusOK,
 		profile,
+	)
+}
+
+// GetMyInvoices mengambil semua invoice milik user yang sedang login
+func (h *UserHandler) GetMyInvoices(c echo.Context) error {
+
+	userToken, ok := c.Get("user").(*jwt.Token)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"message": "Invalid token format",
+			},
+		)
+	}
+
+	claims, ok := userToken.Claims.(jwt.MapClaims)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"message": "Invalid token claims",
+			},
+		)
+	}
+
+	idFloat, ok := claims["id"].(float64)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"message": "Invalid user id",
+			},
+		)
+	}
+
+	userID := int(idFloat)
+
+	invoices, err := h.InvoiceUsecase.GetByUserID(
+		c.Request().Context(),
+		userID,
+	)
+
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			map[string]string{
+				"message": err.Error(),
+			},
+		)
+	}
+
+	return c.JSON(
+		http.StatusOK,
+		invoices,
 	)
 }
