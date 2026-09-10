@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"waste-management-service/internal/config"
+
 	transactionHTTP "waste-management-service/internal/transaction-microservice/delivery/http"
 	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 	transactionUsecase "waste-management-service/internal/transaction-microservice/usecase"
+
 	"waste-management-service/pkg/email"
 
 	userHTTP "waste-management-service/internal/user-microservice/delivery"
@@ -43,9 +46,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// =========================
 	// Echo
+	// =========================
 	e := echo.New()
+
+	// =========================
+	// Email Service - Resend
+	// =========================
 	emailSvc := email.NewResendService()
+
 	// =========================
 	// User
 	// =========================
@@ -115,6 +125,50 @@ func main() {
 		e,
 		wasteHandler,
 	)
+
+	// =========================
+	// Pickup Schedule
+	// =========================
+	pickupRepo := wasteRepository.NewPickupScheduleRepository(db)
+
+	pickupUC := wasteUsecase.NewPickupScheduleUsecase(
+		pickupRepo,
+	)
+
+	// =========================
+	// Pickup Reminder
+	// =========================
+	pickupReminderSvc := wasteUsecase.NewPickupReminderService(
+		emailSvc,
+	)
+
+	pickupReminderJob := wasteUsecase.NewPickupReminderJob(
+		pickupRepo,
+		uRepo,
+		pickupReminderSvc,
+	)
+
+	// =========================
+	// Pickup Handler
+	// =========================
+	pickupHandler := wasteHTTP.NewPickupHandler(
+		pickupUC,
+		pickupReminderJob,
+	)
+
+	wasteHTTP.RegisterPickupRoutes(
+		e,
+		pickupHandler,
+	)
+
+	// =========================
+	// Pickup Reminder Scheduler
+	// =========================
+	pickupReminderScheduler := wasteUsecase.NewPickupReminderScheduler(
+		pickupReminderJob,
+	)
+
+	go pickupReminderScheduler.Start(context.Background())
 
 	// =========================
 	// Start Server
