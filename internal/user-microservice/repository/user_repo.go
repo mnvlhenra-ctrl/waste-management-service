@@ -50,3 +50,8 @@ func (r *userRepository) GetByID(
 
 	return user, err
 }
+
+func (r *userRepository) Delete(ctx context.Context, id int) error {
+	return r.db.WithContext(ctx).
+		Delete(&domain.User{}, id).Error
+}

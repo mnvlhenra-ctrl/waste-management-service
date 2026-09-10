@@ -58,7 +58,7 @@ func (u *userUsecase) Register(
 
 	user.Password = string(hashedPassword)
 
-	// Create user
+	// Create user (untuk nyimpan data house ke repo user)
 	if err := u.userRepo.Store(ctx, user); err != nil {
 		return err
 	}
@@ -164,4 +164,18 @@ func (u *userUsecase) GetProfile(
 	id int) (domain.User, error) {
 
 	return u.userRepo.GetByID(ctx, id)
+}
+
+func (u *userUsecase) DeleteUser(ctx context.Context, id int) error {
+	if id <= 0 {
+		return errors.New("invalid user id")
+	}
+
+	// Cek apakah user ada sebelum dihapus
+	_, err := u.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	return u.userRepo.Delete(ctx, id)
 }

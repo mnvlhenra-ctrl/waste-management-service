@@ -3,6 +3,7 @@ package delivery
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"waste-management-service/internal/domain"
 	appMiddleware "waste-management-service/internal/middleware"
@@ -36,6 +37,7 @@ func NewUserHandler(
 
 	users.POST("/register", handler.Register)
 	users.POST("/login", handler.Login)
+	users.DELETE("/:id", handler.DeleteUser, appMiddleware.JWTMiddleware())
 
 	// Endpoint yang butuh login
 	users.GET(
@@ -54,6 +56,17 @@ type registerRequest struct {
 	HouseNumber string `json:"house_number"`
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user and automatically create house data and first invoice
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body registerRequest true "Register Request"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/users/register [post]
 func (h *UserHandler) Register(c echo.Context) error {
 
 	var request registerRequest
@@ -96,6 +109,17 @@ func (h *UserHandler) Register(c echo.Context) error {
 	)
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Login to get JWT authentication token
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "Login Request"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/v1/users/login [post]
 func (h *UserHandler) Login(c echo.Context) error {
 
 	var req struct {
@@ -135,6 +159,16 @@ func (h *UserHandler) Login(c echo.Context) error {
 	)
 }
 
+// GetProfile godoc
+// @Summary Get user profile
+// @Description Get profile information of the currently logged-in user
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.User
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/profile [get]
 func (h *UserHandler) GetProfile(c echo.Context) error {
 
 	userToken, ok := c.Get("user").(*jwt.Token)
@@ -195,7 +229,42 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 	)
 }
 
+// DeleteUser godoc
+// @Summary Delete user
+// @Description Delete user account by ID
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [delete]
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+	}
+
+	if err := h.UUsecase.DeleteUser(c.Request().Context(), id); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "user successfully deleted"})
+}
+
 // GetMyInvoices mengambil semua invoice milik user yang sedang login
+
+// GetMyInvoices godoc
+// @Summary Get user invoices
+// @Description Get all billing invoices for the currently logged-in user
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} domain.Invoice
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/users/invoices [get]
 func (h *UserHandler) GetMyInvoices(c echo.Context) error {
 
 	userToken, ok := c.Get("user").(*jwt.Token)
