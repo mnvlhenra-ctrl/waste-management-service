@@ -16,7 +16,6 @@ type userUsecase struct {
 	userRepo     domain.UserRepository
 	houseRepo    domain.HouseRepository
 	invoiceRepo  domain.InvoiceRepository
-	wasteRepo    domain.WasteRepository
 	emailService email.Service
 	jwtSecret    string
 }
@@ -25,7 +24,6 @@ func NewUserUsecase(
 	repo domain.UserRepository,
 	houseRepo domain.HouseRepository,
 	invoiceRepo domain.InvoiceRepository,
-	wasteRepo domain.WasteRepository,
 	emailService email.Service,
 	secret string,
 ) domain.UserUsecase {
@@ -34,7 +32,6 @@ func NewUserUsecase(
 		userRepo:     repo,
 		houseRepo:    houseRepo,
 		invoiceRepo:  invoiceRepo,
-		wasteRepo:    wasteRepo,
 		emailService: emailService,
 		jwtSecret:    secret,
 	}
@@ -44,30 +41,10 @@ func (u *userUsecase) Register(
 	ctx context.Context,
 	user *domain.User,
 	houseNumber string,
-	wasteID int,
 ) error {
 
 	if houseNumber == "" {
 		return errors.New("house number is required")
-	}
-
-	if wasteID <= 0 {
-		return errors.New("invalid waste id")
-	}
-
-	// Get waste selected by user
-	waste, err := u.wasteRepo.GetByID(ctx, wasteID)
-	if err != nil {
-		return err
-	}
-
-	// Determine cost based on waste separation status
-	var houseCosts float64
-
-	if waste.IsSeparated {
-		houseCosts = waste.SeparatedCosts
-	} else {
-		houseCosts = waste.NonSeparatedCosts
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword(
@@ -81,7 +58,7 @@ func (u *userUsecase) Register(
 
 	user.Password = string(hashedPassword)
 
-	// Create user
+	// Create user (untuk nyimpan data house ke repo user)
 	if err := u.userRepo.Store(ctx, user); err != nil {
 		return err
 	}
@@ -93,7 +70,7 @@ func (u *userUsecase) Register(
 		Name:        "Rumah " + houseNumber,
 		Category:    "Residential",
 		Services:    "Senin: Organik, Kamis: Anorganik",
-		Costs:       houseCosts,
+		Costs:       15000,
 	}
 
 	if err := u.houseRepo.Create(ctx, house); err != nil {
@@ -184,8 +161,21 @@ func (u *userUsecase) Login(
 
 func (u *userUsecase) GetProfile(
 	ctx context.Context,
-	id int,
-) (domain.User, error) {
+	id int) (domain.User, error) {
 
 	return u.userRepo.GetByID(ctx, id)
+}
+
+func (u *userUsecase) DeleteUser(ctx context.Context, id int) error {
+	if id <= 0 {
+		return errors.New("invalid user id")
+	}
+
+	// Cek apakah user ada sebelum dihapus
+	_, err := u.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	return u.userRepo.Delete(ctx, id)
 }

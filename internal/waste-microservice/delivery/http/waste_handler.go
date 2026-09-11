@@ -19,21 +19,20 @@ func NewHandler(usecase *usecase.WasteUsecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Fungsi helper untuk format tanggal
+// 1. fungsi helper (meniru format dari transaksi)
 func formatWasteDate(t time.Time) string {
 	return t.Format("2006-01-02 15:04")
 }
 
 func formatWaste(waste *domain.Waste) map[string]interface{} {
 	return map[string]interface{}{
-		"id":                  waste.ID,
-		"name":                waste.Name,
-		"stock_availability":  waste.StockAvailability,
-		"separated_costs":     waste.SeparatedCosts,
-		"non_separated_costs": waste.NonSeparatedCosts,
-		"category":            waste.Category,
-		"is_separated":        waste.IsSeparated,
-		"created_at":          formatWasteDate(waste.CreatedAt),
+		"id":                 waste.ID,
+		"name":               waste.Name,
+		"stock_availability": waste.StockAvailability,
+		"costs":              waste.Costs,
+		"category":           waste.Category,
+		"is_separated":       waste.IsSeparated,
+		"created_at":         formatWasteDate(waste.CreatedAt),
 	}
 }
 
@@ -48,34 +47,17 @@ func formatWaste(waste *domain.Waste) map[string]interface{} {
 // @Failure 400 {object} map[string]string
 // @Router /api/v1/wastes [post]
 func (h *Handler) Create(c echo.Context) error {
-
 	var waste domain.Waste
-
 	if err := c.Bind(&waste); err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": "invalid request body",
-			},
-		)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := h.usecase.Create(
-		c.Request().Context(),
-		&waste,
-	); err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+	if err := h.usecase.Create(c.Request().Context(), &waste); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusCreated,
-		formatWaste(&waste),
-	)
+	// Gunakan formatWaste
+	return c.JSON(http.StatusCreated, formatWaste(&waste))
 }
 
 // GetAll godoc
@@ -89,38 +71,21 @@ func (h *Handler) Create(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/wastes [get]
 func (h *Handler) GetAll(c echo.Context) error {
-
 	category := c.QueryParam("category")
 	isSeparated := c.QueryParam("is_separated")
 
-	wastes, err := h.usecase.GetAll(
-		c.Request().Context(),
-		category,
-		isSeparated,
-	)
-
+	wastes, err := h.usecase.GetAll(c.Request().Context(), category, isSeparated)
 	if err != nil {
-		return c.JSON(
-			http.StatusInternalServerError,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
+	// Looping untuk memformat seluruh array
 	response := make([]map[string]interface{}, 0)
-
 	for i := range wastes {
-		response = append(
-			response,
-			formatWaste(&wastes[i]),
-		)
+		response = append(response, formatWaste(&wastes[i]))
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		response,
-	)
+	return c.JSON(http.StatusOK, response)
 }
 
 // GetByID godoc
@@ -134,36 +99,18 @@ func (h *Handler) GetAll(c echo.Context) error {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/wastes/{id} [get]
 func (h *Handler) GetByID(c echo.Context) error {
-
 	id, err := strconv.Atoi(c.Param("id"))
-
 	if err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": "invalid waste id",
-			},
-		)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid waste id"})
 	}
 
-	waste, err := h.usecase.GetByID(
-		c.Request().Context(),
-		id,
-	)
-
+	waste, err := h.usecase.GetByID(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(
-			http.StatusNotFound,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		formatWaste(waste),
-	)
+	// mengembalikan formatWaste biar sama dengan transaction
+	return c.JSON(http.StatusOK, formatWaste(waste))
 }
 
 // Update godoc
@@ -179,61 +126,28 @@ func (h *Handler) GetByID(c echo.Context) error {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/wastes/{id} [put]
 func (h *Handler) Update(c echo.Context) error {
-
 	id, err := strconv.Atoi(c.Param("id"))
-
 	if err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": "invalid waste id",
-			},
-		)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid waste id"})
 	}
 
 	var waste domain.Waste
-
 	if err := c.Bind(&waste); err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": "invalid request body",
-			},
-		)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
 	waste.ID = id
-
-	if err := h.usecase.Update(
-		c.Request().Context(),
-		&waste,
-	); err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+	if err := h.usecase.Update(c.Request().Context(), &waste); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	updatedWaste, err := h.usecase.GetByID(
-		c.Request().Context(),
-		id,
-	)
-
+	updatedWaste, err := h.usecase.GetByID(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(
-			http.StatusNotFound,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		formatWaste(updatedWaste),
-	)
+	// Gunakan formatWaste
+	return c.JSON(http.StatusOK, formatWaste(updatedWaste))
 }
 
 // Delete godoc
@@ -247,34 +161,17 @@ func (h *Handler) Update(c echo.Context) error {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/wastes/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
-
 	id, err := strconv.Atoi(c.Param("id"))
-
 	if err != nil {
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]string{
-				"error": "invalid waste id",
-			},
-		)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid waste id"})
 	}
 
-	if err := h.usecase.Delete(
-		c.Request().Context(),
-		id,
-	); err != nil {
-		return c.JSON(
-			http.StatusNotFound,
-			map[string]string{
-				"error": err.Error(),
-			},
-		)
+	if err := h.usecase.Delete(c.Request().Context(), id); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(
-		http.StatusOK,
-		map[string]string{
-			"message": "waste successfully deleted",
-		},
-	)
+	// 2. Handling delete Ubah dari NoContent menjadi JSON notifikasi sukses
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "waste successfully deleted",
+	})
 }

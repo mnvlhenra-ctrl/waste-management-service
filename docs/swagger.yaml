@@ -20,9 +20,6 @@ definitions:
       password:
         example: password123
         type: string
-      waste_id:
-        example: 1
-        type: integer
     type: object
   domain.Invoice:
     properties:
@@ -75,6 +72,8 @@ definitions:
     properties:
       category:
         type: string
+      costs:
+        type: number
       created_at:
         type: string
       id:
@@ -83,10 +82,6 @@ definitions:
         type: boolean
       name:
         type: string
-      non_separated_costs:
-        type: number
-      separated_costs:
-        type: number
       stock_availability:
         type: number
     type: object

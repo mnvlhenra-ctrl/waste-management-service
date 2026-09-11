@@ -14,10 +14,12 @@ type UserRepository interface {
 	Store(ctx context.Context, u *User) error
 	GetByEmail(ctx context.Context, email string) (User, error)
 	GetByID(ctx context.Context, id int) (User, error)
+	Delete(ctx context.Context, id int) error
 }
 
 type UserUsecase interface {
-	Register(ctx context.Context, u *User, houseNumber string, wasteID int) error
+	Register(ctx context.Context, u *User, houseNumber string) error
 	Login(ctx context.Context, email, password string) (string, error)
 	GetProfile(ctx context.Context, id int) (User, error)
+	DeleteUser(ctx context.Context, id int) error
 }

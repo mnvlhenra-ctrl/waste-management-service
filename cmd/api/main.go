@@ -87,18 +87,12 @@ func main() {
 	invoiceRepo := repository.NewInvoiceRepository(db)
 
 	// =========================
-	// Waste Repository
-	// =========================
-	wasteRepo := wasteRepository.NewWasteRepository(db)
-
-	// =========================
 	// User Usecase
 	// =========================
 	uUC := userUsecase.NewUserUsecase(
 		uRepo,
 		houseRepo,
 		invoiceRepo,
-		wasteRepo,
 		emailSvc,
 		cfg.JWTSecret,
 	)
@@ -136,6 +130,8 @@ func main() {
 	// =========================
 	// Waste
 	// =========================
+	wasteRepo := wasteRepository.NewWasteRepository(db)
+
 	wasteUC := wasteUsecase.NewWasteUsecase(
 		wasteRepo,
 	)

@@ -3,6 +3,7 @@ package delivery
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"waste-management-service/internal/domain"
 	appMiddleware "waste-management-service/internal/middleware"
@@ -36,13 +37,16 @@ func NewUserHandler(
 
 	users.POST("/register", handler.Register)
 	users.POST("/login", handler.Login)
+	users.DELETE("/:id", handler.DeleteUser, appMiddleware.JWTMiddleware())
 
+	// Endpoint yang butuh login
 	users.GET(
 		"/profile",
 		handler.GetProfile,
 		appMiddleware.JWTMiddleware(),
 	)
 
+	// Get invoice milik user yang sedang login
 	users.GET(
 		"/invoices",
 		handler.GetMyInvoices,
@@ -54,11 +58,10 @@ type registerRequest struct {
 	Email       string `json:"email" example:"user@gmail.com"`
 	Password    string `json:"password" example:"password123"`
 	HouseNumber string `json:"house_number" example:"A-12"`
-	WasteID     int    `json:"waste_id" example:"1"`
 }
 
 // Register godoc
-// @Summary Register user
+// @Summary Register a new user
 // @Description Register a new user and associate the user with a house
 // @Tags Users
 // @Accept json
@@ -92,7 +95,6 @@ func (h *UserHandler) Register(c echo.Context) error {
 		ctx,
 		&user,
 		request.HouseNumber,
-		request.WasteID,
 	); err != nil {
 
 		return c.JSON(
@@ -224,12 +226,37 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		)
 	}
 
+	// Jangan kirim password
 	profile.Password = ""
 
 	return c.JSON(
 		http.StatusOK,
 		profile,
 	)
+}
+
+// DeleteUser godoc
+// @Summary Delete user
+// @Description Delete user account by ID
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [delete]
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+	}
+
+	if err := h.UUsecase.DeleteUser(c.Request().Context(), id); err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "user successfully deleted"})
 }
 
 // GetMyInvoices godoc

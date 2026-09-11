@@ -9,8 +9,7 @@ type Waste struct {
 	ID                int       `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name              string    `json:"name"`
 	StockAvailability float64   `json:"stock_availability"`
-	SeparatedCosts    float64   `json:"separated_costs"`
-	NonSeparatedCosts float64   `json:"non_separated_costs"`
+	Costs             float64   `json:"costs"`
 	Category          string    `json:"category"`
 	IsSeparated       bool      `json:"is_separated" gorm:"default:false"`
 	CreatedAt         time.Time `json:"created_at" gorm:"autoCreateTime"`
@@ -18,6 +17,7 @@ type Waste struct {
 
 type WasteRepository interface {
 	Create(ctx context.Context, waste *Waste) error
+	// kutambahin GetAll buat parameter untuk filter ya mas
 	GetAll(ctx context.Context, category string, isSeparated string) ([]Waste, error)
 	GetByID(ctx context.Context, id int) (*Waste, error)
 	Update(ctx context.Context, waste *Waste) error
@@ -26,6 +26,7 @@ type WasteRepository interface {
 
 type WasteUsecase interface {
 	Create(ctx context.Context, waste *Waste) error
+	// kutambahinGetAll buat parameter untuk filter ya mas
 	GetAll(ctx context.Context, category string, isSeparated string) ([]Waste, error)
 	GetByID(ctx context.Context, id int) (*Waste, error)
 	Update(ctx context.Context, waste *Waste) error

@@ -772,10 +772,6 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "password123"
-                },
-                "waste_id": {
-                    "type": "integer",
-                    "example": 1
                 }
             }
         },
@@ -857,6 +853,9 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
+                "costs": {
+                    "type": "number"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -868,12 +867,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                },
-                "non_separated_costs": {
-                    "type": "number"
-                },
-                "separated_costs": {
-                    "type": "number"
                 },
                 "stock_availability": {
                     "type": "number"
