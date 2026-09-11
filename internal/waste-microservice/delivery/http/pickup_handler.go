@@ -6,6 +6,7 @@ import (
 
 	"waste-management-service/internal/waste-microservice/usecase"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -25,23 +26,71 @@ func NewPickupHandler(
 }
 
 type createPickupRequest struct {
-	UserID     int       `json:"user_id" example:"1"`
 	PickupDate time.Time `json:"pickup_date" example:"2026-09-15T09:00:00Z"`
 	WasteType  string    `json:"waste_type" example:"Organic"`
 }
 
 // CreatePickup godoc
 // @Summary Create pickup schedule
-// @Description Create a new waste pickup schedule
+// @Description Create a new waste pickup schedule for the authenticated user
 // @Tags Pickups
 // @Accept json
 // @Produce json
 // @Param request body createPickupRequest true "Pickup schedule request"
+// @Security BearerAuth
 // @Success 201 {object} usecase.PickupSchedule
 // @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
 // @Router /api/v1/pickups [post]
 func (h *PickupHandler) CreatePickup(c echo.Context) error {
 
+	// =========================
+	// Get JWT token
+	// =========================
+	userToken, ok := c.Get("user").(*jwt.Token)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"error": "invalid token format",
+			},
+		)
+	}
+
+	// =========================
+	// Get JWT claims
+	// =========================
+	claims, ok := userToken.Claims.(jwt.MapClaims)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"error": "invalid token claims",
+			},
+		)
+	}
+
+	// =========================
+	// Get user ID from JWT
+	// =========================
+	idFloat, ok := claims["id"].(float64)
+
+	if !ok {
+		return c.JSON(
+			http.StatusUnauthorized,
+			map[string]string{
+				"error": "invalid user id",
+			},
+		)
+	}
+
+	userID := int(idFloat)
+
+	// =========================
+	// Bind request body
+	// =========================
 	var request createPickupRequest
 
 	if err := c.Bind(&request); err != nil {
@@ -53,8 +102,11 @@ func (h *PickupHandler) CreatePickup(c echo.Context) error {
 		)
 	}
 
+	// =========================
+	// Create schedule
+	// =========================
 	schedule := &usecase.PickupSchedule{
-		UserID:     request.UserID,
+		UserID:     userID,
 		PickupDate: request.PickupDate,
 		WasteType:  request.WasteType,
 	}
