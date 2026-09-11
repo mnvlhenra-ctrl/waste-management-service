@@ -37,14 +37,12 @@ func NewUserHandler(
 	users.POST("/register", handler.Register)
 	users.POST("/login", handler.Login)
 
-	// Endpoint yang butuh login
 	users.GET(
 		"/profile",
 		handler.GetProfile,
 		appMiddleware.JWTMiddleware(),
 	)
 
-	// Get invoice milik user yang sedang login
 	users.GET(
 		"/invoices",
 		handler.GetMyInvoices,
@@ -56,6 +54,7 @@ type registerRequest struct {
 	Email       string `json:"email" example:"user@gmail.com"`
 	Password    string `json:"password" example:"password123"`
 	HouseNumber string `json:"house_number" example:"A-12"`
+	WasteID     int    `json:"waste_id" example:"1"`
 }
 
 // Register godoc
@@ -93,6 +92,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 		ctx,
 		&user,
 		request.HouseNumber,
+		request.WasteID,
 	); err != nil {
 
 		return c.JSON(
@@ -224,7 +224,6 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		)
 	}
 
-	// Jangan kirim password
 	profile.Password = ""
 
 	return c.JSON(

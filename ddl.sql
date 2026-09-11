@@ -67,7 +67,51 @@ CREATE TABLE wastes (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     stock_availability DECIMAL(12, 2) NOT NULL DEFAULT 0,
-    costs DECIMAL(12, 2) NOT NULL,
+    separated_costs DECIMAL(12, 2) NOT NULL DEFAULT 50000,
+    non_separated_costs DECIMAL(12, 2) NOT NULL DEFAULT 100000,
     category VARCHAR(50) NOT NULL,
+    is_separated BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO wastes (
+    name,
+    stock_availability,
+    separated_costs,
+    non_separated_costs,
+    category,
+    is_separated
+)
+VALUES
+(
+    'Organik',
+    100,
+    50000,
+    100000,
+    'Organik',
+    TRUE
+),
+(
+    'Anorganik',
+    100,
+    50000,
+    100000,
+    'Anorganik',
+    TRUE
+),
+(
+    'B3',
+    100,
+    50000,
+    100000,
+    'B3',
+    FALSE
+),
+(
+    'Residu',
+    100,
+    50000,
+    100000,
+    'Residu',
+    FALSE
 );
