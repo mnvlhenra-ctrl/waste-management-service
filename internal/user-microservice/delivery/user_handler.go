@@ -47,22 +47,26 @@ func NewUserHandler(
 	)
 
 	// Get invoice milik user yang sedang login
-	users.GET("/invoices", handler.GetMyInvoices, appMiddleware.JWTMiddleware())
+	users.GET(
+		"/invoices",
+		handler.GetMyInvoices,
+		appMiddleware.JWTMiddleware(),
+	)
 }
 
 type registerRequest struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	HouseNumber string `json:"house_number"`
+	Email       string `json:"email" example:"user@gmail.com"`
+	Password    string `json:"password" example:"password123"`
+	HouseNumber string `json:"house_number" example:"A-12"`
 }
 
 // Register godoc
 // @Summary Register a new user
-// @Description Register a new user and automatically create house data and first invoice
+// @Description Register a new user and associate the user with a house
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param request body registerRequest true "Register Request"
+// @Param request body registerRequest true "Register request"
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -109,23 +113,25 @@ func (h *UserHandler) Register(c echo.Context) error {
 	)
 }
 
+type loginRequest struct {
+	Email    string `json:"email" example:"user@gmail.com"`
+	Password string `json:"password" example:"password123"`
+}
+
 // Login godoc
 // @Summary Login user
-// @Description Login to get JWT authentication token
+// @Description Login user and return JWT token
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param request body loginRequest true "Login Request"
+// @Param request body loginRequest true "Login request"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/users/login [post]
 func (h *UserHandler) Login(c echo.Context) error {
 
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req loginRequest
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(
@@ -161,7 +167,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 
 // GetProfile godoc
 // @Summary Get user profile
-// @Description Get profile information of the currently logged-in user
+// @Description Get profile information of the currently authenticated user
 // @Tags Users
 // @Produce json
 // @Security BearerAuth
@@ -253,11 +259,9 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "user successfully deleted"})
 }
 
-// GetMyInvoices mengambil semua invoice milik user yang sedang login
-
 // GetMyInvoices godoc
-// @Summary Get user invoices
-// @Description Get all billing invoices for the currently logged-in user
+// @Summary Get my invoices
+// @Description Get all invoices belonging to the currently authenticated user
 // @Tags Users
 // @Produce json
 // @Security BearerAuth

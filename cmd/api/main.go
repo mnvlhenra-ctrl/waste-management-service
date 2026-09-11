@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"waste-management-service/internal/config"
+
 	transactionHTTP "waste-management-service/internal/transaction-microservice/delivery/http"
 	transactionRepository "waste-management-service/internal/transaction-microservice/repository"
 	transactionUsecase "waste-management-service/internal/transaction-microservice/usecase"
-	"waste-management-service/pkg/email"
 
 	userHTTP "waste-management-service/internal/user-microservice/delivery"
 	userRepository "waste-management-service/internal/user-microservice/repository"
@@ -19,11 +20,27 @@ import (
 	wasteRepository "waste-management-service/internal/waste-microservice/repository"
 	wasteUsecase "waste-management-service/internal/waste-microservice/usecase"
 
+	"waste-management-service/pkg/email"
+
+	_ "waste-management-service/docs"
+
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+// @title Waste Management Service API
+// @version 1.0
+// @description REST API for Waste Management Service
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter your JWT token with the Bearer prefix. Example: Bearer {token}
 func main() {
 	cfg := config.LoadConfig()
 
@@ -43,9 +60,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// =========================
 	// Echo
+	// =========================
 	e := echo.New()
+
+	// =========================
+	// Swagger
+	// =========================
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	// =========================
+	// Email Service - Resend
+	// =========================
 	emailSvc := email.NewResendService()
+
 	// =========================
 	// User
 	// =========================
@@ -115,6 +144,50 @@ func main() {
 		e,
 		wasteHandler,
 	)
+
+	// =========================
+	// Pickup Schedule
+	// =========================
+	pickupRepo := wasteRepository.NewPickupScheduleRepository(db)
+
+	pickupUC := wasteUsecase.NewPickupScheduleUsecase(
+		pickupRepo,
+	)
+
+	// =========================
+	// Pickup Reminder
+	// =========================
+	pickupReminderSvc := wasteUsecase.NewPickupReminderService(
+		emailSvc,
+	)
+
+	pickupReminderJob := wasteUsecase.NewPickupReminderJob(
+		pickupRepo,
+		uRepo,
+		pickupReminderSvc,
+	)
+
+	// =========================
+	// Pickup Handler
+	// =========================
+	pickupHandler := wasteHTTP.NewPickupHandler(
+		pickupUC,
+		pickupReminderJob,
+	)
+
+	wasteHTTP.RegisterPickupRoutes(
+		e,
+		pickupHandler,
+	)
+
+	// =========================
+	// Pickup Reminder Scheduler
+	// =========================
+	pickupReminderScheduler := wasteUsecase.NewPickupReminderScheduler(
+		pickupReminderJob,
+	)
+
+	go pickupReminderScheduler.Start(context.Background())
 
 	// =========================
 	// Start Server
